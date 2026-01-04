@@ -135,7 +135,7 @@ static __inline__ __attribute__((always_inline)) void uc_write_fence(uint64_t v)
 	if (!uc_fence_word)
 		return;
 	*uc_fence_word = v;
-	(void)*uc_fence_word;
+	//(void)*uc_fence_word;
 }
 
 static int g_verify_failures;
@@ -217,6 +217,42 @@ static void bench_one(const char *path, size_t size_bytes, int iters)
 		{
 			double bytes = (double)size_bytes * (double)iters;
 			printf("%s write: %.2f MB/s (%.3f s)\n", path, (bytes / (1024.0 * 1024.0)) / dt, dt);
+		}
+	}
+
+	{
+		int failures = 0;
+		double dt = 0.0;
+		for (iter = 0; iter < iters; iter++) {
+			t0 = now_sec();
+			for (i = 0; i < n64; i++)
+				p[i] = (uint64_t)(i + (uint64_t)iter);
+			t1 = now_sec();
+			dt += (t1 - t0);
+
+			sum = 0;
+			for (i = 0; i < n64; i++)
+				sum += p[i];
+			{
+				uint64_t expect = expected_sum_u64(n64, iter);
+				if (sum != expect) {
+					fprintf(stderr,
+						"%s write_nofence verify failed iter=%d sum=0x%" PRIx64 " expect=0x%" PRIx64 "\n",
+						path, iter, sum, expect);
+					g_verify_failures++;
+					failures++;
+				}
+			}
+		}
+
+		if (!failures)
+			printf("%s write_nofence verify: ok\n", path);
+		else
+			printf("%s write_nofence verify: failed (%d)\n", path, failures);
+		{
+			double bytes = (double)size_bytes * (double)iters;
+			printf("%s write_nofence: %.2f MB/s (%.3f s)\n", path,
+			       (bytes / (1024.0 * 1024.0)) / dt, dt);
 		}
 	}
 
@@ -329,6 +365,101 @@ static void bench_one(const char *path, size_t size_bytes, int iters)
 			}
 		} else {
 			printf("%s ntwrite: unsupported arch\n", path);
+		}
+	}
+
+	{
+		int nt_supported = 0;
+		int failures = 0;
+		double dt = 0.0;
+		for (iter = 0; iter < iters; iter++) {
+#if defined(__i386__) || defined(__x86_64__)
+			uint64_t *np = (uint64_t *)map;
+			nt_supported = 1;
+			t0 = now_sec();
+			for (i = 0; i < n64; i++)
+				nt_store_u64(&np[i], (uint64_t)(i + (uint64_t)iter));
+			t1 = now_sec();
+			dt += (t1 - t0);
+
+			sum = 0;
+			for (i = 0; i < n64; i++)
+				sum += p[i];
+			{
+				uint64_t expect = expected_sum_u64(n64, iter);
+				if (sum != expect) {
+					fprintf(stderr,
+						"%s ntwrite_nofence verify failed iter=%d sum=0x%" PRIx64 " expect=0x%" PRIx64 "\n",
+						path, iter, sum, expect);
+					g_verify_failures++;
+					failures++;
+				}
+			}
+#else
+			break;
+#endif
+		}
+
+		if (nt_supported) {
+			if (!failures)
+				printf("%s ntwrite_nofence verify: ok\n", path);
+			else
+				printf("%s ntwrite_nofence verify: failed (%d)\n", path, failures);
+			{
+				double bytes = (double)size_bytes * (double)iters;
+				printf("%s ntwrite_nofence: %.2f MB/s (%.3f s)\n", path,
+				       (bytes / (1024.0 * 1024.0)) / dt, dt);
+			}
+		} else {
+			printf("%s ntwrite_nofence: unsupported arch\n", path);
+		}
+	}
+
+	{
+		int nt_supported = 0;
+		int failures = 0;
+		double dt = 0.0;
+		for (iter = 0; iter < iters; iter++) {
+#if defined(__i386__) || defined(__x86_64__)
+			uint64_t *np = (uint64_t *)map;
+			nt_supported = 1;
+			t0 = now_sec();
+			for (i = 0; i < n64; i++)
+				nt_store_u64(&np[i], (uint64_t)(i + (uint64_t)iter));
+			t1 = now_sec();
+			dt += (t1 - t0);
+#else
+			break;
+#endif
+		}
+
+		if (nt_supported) {
+			sum = 0;
+			for (i = 0; i < n64; i++)
+				sum += p[i];
+			{
+				int last_iter = iters > 0 ? (iters - 1) : 0;
+				uint64_t expect = expected_sum_u64(n64, last_iter);
+				if (sum != expect) {
+					fprintf(stderr,
+						"%s ntwrite_nofence_deferred verify failed sum=0x%" PRIx64 " expect=0x%" PRIx64 "\n",
+						path, sum, expect);
+					g_verify_failures++;
+					failures++;
+				}
+			}
+
+			if (!failures)
+				printf("%s ntwrite_nofence_deferred verify: ok\n", path);
+			else
+				printf("%s ntwrite_nofence_deferred verify: failed (%d)\n", path, failures);
+			{
+				double bytes = (double)size_bytes * (double)iters;
+				printf("%s ntwrite_nofence_deferred: %.2f MB/s (%.3f s)\n", path,
+				       (bytes / (1024.0 * 1024.0)) / dt, dt);
+			}
+		} else {
+			printf("%s ntwrite_nofence_deferred: unsupported arch\n", path);
 		}
 	}
 
@@ -471,7 +602,7 @@ int main(int argc, char **argv)
 	uc_fence_init();
 
 	bench_one("/dev/memcache_wb", size_bytes, iters);
-	bench_one("/dev/memcache_uc", size_bytes, iters);
+	bench_one("/dev/memcache_uc", size_bytes/8, iters);
 	bench_one("/dev/memcache_wc", size_bytes, iters);
 	return g_verify_failures ? 1 : 0;
 }
