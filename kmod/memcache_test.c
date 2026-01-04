@@ -28,6 +28,9 @@ struct memcache_region {
 static unsigned int size_mb = 16;
 module_param(size_mb, uint, 0644);
 
+static int numa_node = -1;
+module_param(numa_node, int, 0644);
+
 static dev_t memcache_devt;
 static struct class *memcache_class;
 static struct cdev memcache_cdev;
@@ -137,7 +140,10 @@ static int region_alloc(struct memcache_region *r, enum memcache_type type, size
 		return -ENOMEM;
 
 	for (i = 0; i < r->nr_pages; i++) {
-		r->pages[i] = alloc_page(GFP_KERNEL | __GFP_ZERO);
+		if (numa_node >= 0)
+			r->pages[i] = alloc_pages_node(numa_node, GFP_KERNEL | __GFP_ZERO, 0);
+		else
+			r->pages[i] = alloc_page(GFP_KERNEL | __GFP_ZERO);
 		if (!r->pages[i]) {
 			ret = -ENOMEM;
 			goto err;
@@ -186,7 +192,13 @@ static int __init memcache_init(void)
 	if (!size_bytes)
 		return -EINVAL;
 
-	pr_info(DRV_NAME ": init size_mb=%u size_bytes=%zu\n", size_mb, size_bytes);
+	if (numa_node >= 0 && !node_online(numa_node)) {
+		pr_err(DRV_NAME ": numa_node=%d is not online\n", numa_node);
+		return -EINVAL;
+	}
+
+	pr_info(DRV_NAME ": init size_mb=%u size_bytes=%zu numa_node=%d\n", size_mb, size_bytes,
+		numa_node);
 
 	ret = alloc_chrdev_region(&memcache_devt, 0, MEMCACHE_MAX, DRV_NAME);
 	if (ret)
@@ -214,8 +226,9 @@ static int __init memcache_init(void)
 	for (i = 0; i < MEMCACHE_MAX; i++) {
 		device_create(memcache_class, NULL, memcache_devt + i, NULL, "%s_%s", DEV_BASENAME,
 			      type_name((enum memcache_type)i));
-		pr_info(DRV_NAME ": /dev/%s_%s size_bytes=%zu pages=%lu\n", DEV_BASENAME,
-			type_name((enum memcache_type)i), regions[i].size_bytes, regions[i].nr_pages);
+		pr_info(DRV_NAME ": /dev/%s_%s size_bytes=%zu pages=%lu first_page_nid=%d\n", DEV_BASENAME,
+			type_name((enum memcache_type)i), regions[i].size_bytes, regions[i].nr_pages,
+			(regions[i].pages && regions[i].pages[0]) ? page_to_nid(regions[i].pages[0]) : -1);
 	}
 
 	return 0;
