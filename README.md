@@ -41,6 +41,14 @@ make -C kmod
 sudo insmod kmod/memcache_test.ko size_mb=16
 ```
 
+可选参数：
+
+- `numa_node`：指定页分配所在 NUMA node（默认 `-1` 表示内核默认策略）。例如：
+
+```bash
+sudo insmod kmod/memcache_test.ko size_mb=16 numa_node=0
+```
+
 设备节点：
 
 - `/dev/memcache_wb`
@@ -82,9 +90,12 @@ sudo user/cache_bench
 对每种设备映射，测试项包括：
 
 - `write`：普通 store 写入，每轮写入不同的值，并在每轮结束校验 sum 正确性。
+- `write_nofence`：普通 store 写入，不使用任何 fence，每轮写入后校验。
 - `write_ucfence`：不使用 `sfence`，每轮写入后对 UC 区域写入一个 fence word（并读回）作为排序/排空手段，然后校验。
-- `ntwrite`：x86 上使用 `movnti` 进行 non-temporal store 写入，每轮结束 `sfence`，然后校验。
-- `ntwrite_ucfence`：`movnti` 写入后使用 UC-write fence，然后校验。
+- `ntwrite`：x86 上使用 `movntdq`（SSE2 16-byte streaming store）进行 non-temporal store 写入，每轮结束 `sfence`，然后校验。
+- `ntwrite_nofence`：`movntdq` 写入，不使用任何 fence，每轮写入后校验。
+- `ntwrite_nofence_deferred`：`movntdq` 写入，不使用任何 fence，并将校验延后到所有迭代写完后再做一次。
+- `ntwrite_ucfence`：`movntdq` 写入后使用 UC-write fence，然后校验。
 - `read`：顺序读取求和带宽。
 
 说明：
@@ -96,51 +107,73 @@ sudo user/cache_bench
 以下为一次运行输出示例：
 
 ```text
+pinned to cpu 0
+/dev/memcache_wb size: 16777216 bytes (16.00 MiB) source=ioctl
 /dev/memcache_wb write verify: ok
-/dev/memcache_wb write: 14382.89 MB/s (0.056 s)
+/dev/memcache_wb write: 14605.71 MB/s (0.055 s)
+/dev/memcache_wb write_nofence verify: ok
+/dev/memcache_wb write_nofence: 12493.88 MB/s (0.064 s)
 /dev/memcache_wb write_ucfence verify: ok
-/dev/memcache_wb write_ucfence: 9995.49 MB/s (0.080 s)
+/dev/memcache_wb write_ucfence: 11718.75 MB/s (0.068 s)
 /dev/memcache_wb ntwrite verify: ok
-/dev/memcache_wb ntwrite: 14240.87 MB/s (0.056 s)
+/dev/memcache_wb ntwrite: 20481.37 MB/s (0.039 s)
+/dev/memcache_wb ntwrite_nofence verify: ok
+/dev/memcache_wb ntwrite_nofence: 20584.17 MB/s (0.039 s)
+/dev/memcache_wb ntwrite_nofence_deferred verify: ok
+/dev/memcache_wb ntwrite_nofence_deferred: 20351.10 MB/s (0.039 s)
 /dev/memcache_wb ntwrite_ucfence verify: ok
-/dev/memcache_wb ntwrite_ucfence: 12998.98 MB/s (0.062 s)
-/dev/memcache_wb read : 12733.78 MB/s (0.063 s) sum=0x660135300000
+/dev/memcache_wb ntwrite_ucfence: 13888.57 MB/s (0.058 s)
+/dev/memcache_wb read : 13198.05 MB/s (0.061 s) sum=0x660135300000
 /dev/memcache_uc size: 16777216 bytes (16.00 MiB) source=ioctl
 /dev/memcache_uc write verify: ok
-/dev/memcache_uc write: 221.63 MB/s (3.610 s)
+/dev/memcache_uc write: 228.20 MB/s (3.506 s)
+/dev/memcache_uc write_nofence verify: ok
+/dev/memcache_uc write_nofence: 226.73 MB/s (3.528 s)
 /dev/memcache_uc write_ucfence verify: ok
-/dev/memcache_uc write_ucfence: 229.16 MB/s (3.491 s)
+/dev/memcache_uc write_ucfence: 229.38 MB/s (3.488 s)
 /dev/memcache_uc ntwrite verify: ok
-/dev/memcache_uc ntwrite: 229.29 MB/s (3.489 s)
+/dev/memcache_uc ntwrite: 465.89 MB/s (1.717 s)
+/dev/memcache_uc ntwrite_nofence verify: ok
+/dev/memcache_uc ntwrite_nofence: 464.60 MB/s (1.722 s)
+/dev/memcache_uc ntwrite_nofence_deferred verify: ok
+/dev/memcache_uc ntwrite_nofence_deferred: 462.71 MB/s (1.729 s)
 /dev/memcache_uc ntwrite_ucfence verify: ok
-/dev/memcache_uc ntwrite_ucfence: 232.64 MB/s (3.439 s)
-/dev/memcache_uc read : 105.32 MB/s (7.596 s) sum=0x6601352f9a02
+/dev/memcache_uc ntwrite_ucfence: 464.41 MB/s (1.723 s)
+/dev/memcache_uc read : 95.72 MB/s (8.357 s) sum=0x6601352f9a02
 /dev/memcache_wc size: 16777216 bytes (16.00 MiB) source=ioctl
 /dev/memcache_wc write verify: ok
-/dev/memcache_wc write: 25918.32 MB/s (0.031 s)
+/dev/memcache_wc write: 25622.50 MB/s (0.031 s)
+/dev/memcache_wc write_nofence verify: ok
+/dev/memcache_wc write_nofence: 25378.19 MB/s (0.032 s)
 /dev/memcache_wc write_ucfence verify: ok
-/dev/memcache_wc write_ucfence: 14466.35 MB/s (0.055 s)
+/dev/memcache_wc write_ucfence: 14752.77 MB/s (0.054 s)
 /dev/memcache_wc ntwrite verify: ok
-/dev/memcache_wc ntwrite: 23326.26 MB/s (0.034 s)
+/dev/memcache_wc ntwrite: 20700.59 MB/s (0.039 s)
+/dev/memcache_wc ntwrite_nofence verify: ok
+/dev/memcache_wc ntwrite_nofence: 21187.27 MB/s (0.038 s)
+/dev/memcache_wc ntwrite_nofence_deferred verify: ok
+/dev/memcache_wc ntwrite_nofence_deferred: 20781.79 MB/s (0.038 s)
 /dev/memcache_wc ntwrite_ucfence verify: ok
-/dev/memcache_wc ntwrite_ucfence: 13883.68 MB/s (0.058 s)
-/dev/memcache_wc read : 104.86 MB/s (7.629 s) sum=0x660135300000
+/dev/memcache_wc ntwrite_ucfence: 15648.83 MB/s (0.051 s)
+/dev/memcache_wc read : 104.03 MB/s (7.690 s) sum=0x660135300000
 ```
 
 ### 结果汇总表（MB/s）
 
-| Memory type | write | write_ucfence | ntwrite | ntwrite_ucfence | read |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| WB | 14382.89 | 9995.49 | 14240.87 | 12998.98 | 12733.78 |
-| UC | 221.63 | 229.16 | 229.29 | 232.64 | 105.32 |
-| WC | 25918.32 | 14466.35 | 23326.26 | 13883.68 | 104.86 |
+| Memory type | write | write_nofence | write_ucfence | ntwrite | ntwrite_nofence | ntwrite_ucfence | read |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| WB | 14605.71 | 12493.88 | 11718.75 | 20481.37 | 20584.17 | 13888.57 | 13198.05 |
+| UC | 228.20 | 226.73 | 229.38 | 465.89 | 464.60 | 464.41 | 95.72 |
+| WC | 25622.50 | 25378.19 | 14752.77 | 20700.59 | 21187.27 | 15648.83 | 104.03 |
 
 备注：
 
 - `write`：普通 store + `sfence`（每轮结束）。
 - `write_ucfence`：普通 store + UC-write fence（每轮结束，写 UC fence word 并读回）。
-- `ntwrite`：`movnti` + `sfence`（每轮结束）。
-- `ntwrite_ucfence`：`movnti` + UC-write fence（每轮结束）。
+- `write_nofence`：普通 store（无 fence）。
+- `ntwrite`：`movntdq` + `sfence`（每轮结束）。
+- `ntwrite_nofence`：`movntdq`（无 fence）。
+- `ntwrite_ucfence`：`movntdq` + UC-write fence（每轮结束）。
 
 ### 结果分析
 
@@ -201,6 +234,7 @@ UC-write fence 的做法是：在每轮写入结束后，额外对一段 UC 映�
 - 在 WB：`ntwrite` 与 `write` 接近。
 - 在 WC：`ntwrite` 略低于 `write`。
 - 原因：`movnt` 的优势通常体现在“流式写入且避免污染 cache”的场景；在 WC 映射上写合并已经很强，`movnt` 不一定带来收益。
+- 备注：当前实现使用 `movntdq`（SSE2 16-byte streaming store）。在 UC 映射上，`ntwrite` 往往会明显快于普通 `write`，这是因为写入粒度更大、更适合总线事务。
 
 #### 5) UC 的 read sum 与 WB/WC 不一致属于预期
 

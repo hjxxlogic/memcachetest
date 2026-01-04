@@ -2,16 +2,25 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sched.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#if defined(__x86_64__) || defined(__SSE2__)
+#include <emmintrin.h>
+#endif
+#if defined(__i386__) || defined(__x86_64__)
+#include <immintrin.h>
+#endif
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+
+#define MEMCACHE_IOCTL_GET_SIZE 0
 
 #if defined(__i386__) || defined(__x86_64__)
 static __inline__ __attribute__((always_inline)) uint64_t rdtsc_ordered(void)
@@ -55,6 +64,54 @@ static __inline__ __attribute__((always_inline)) void nt_store_u64(uint64_t *add
 	asm volatile("movnti %1, %0" : "=m"(((uint32_t *)addr)[1]) : "r"((uint32_t)(v >> 32)) : "memory");
 #endif
 }
+
+static __inline__ __attribute__((always_inline)) void nt_store_2x64(uint64_t *addr, uint64_t lo, uint64_t hi)
+{
+#if defined(__x86_64__) || defined(__SSE2__)
+	if ((((uintptr_t)addr) & 0xf) == 0) {
+		__m128i v = _mm_set_epi64x((long long)hi, (long long)lo);
+		_mm_stream_si128((__m128i *)addr, v);
+		return;
+	}
+#endif
+	nt_store_u64(&addr[0], lo);
+	nt_store_u64(&addr[1], hi);
+}
+
+#if defined(__i386__) || defined(__x86_64__)
+static int nt_avx_supported;
+
+static void nt_init_once(void)
+{
+	static int inited;
+	if (inited)
+		return;
+	inited = 1;
+
+#if defined(__GNUC__)
+	if (__builtin_cpu_supports("avx"))
+		nt_avx_supported = 1;
+#endif
+}
+
+__attribute__((target("avx")))
+static void nt_store_4x64_avx(uint64_t *addr, uint64_t v0, uint64_t v1, uint64_t v2, uint64_t v3)
+{
+	__m256i v = _mm256_set_epi64x((long long)v3, (long long)v2, (long long)v1, (long long)v0);
+	_mm256_stream_si256((__m256i *)addr, v);
+}
+
+static __inline__ __attribute__((always_inline)) void nt_store_4x64(uint64_t *addr, uint64_t v0, uint64_t v1,
+						uint64_t v2, uint64_t v3)
+{
+	if (nt_avx_supported && ((((uintptr_t)addr) & 0x1f) == 0)) {
+		nt_store_4x64_avx(addr, v0, v1, v2, v3);
+		return;
+	}
+	nt_store_2x64(&addr[0], v0, v1);
+	nt_store_2x64(&addr[2], v2, v3);
+}
+#endif
 
 static __inline__ __attribute__((always_inline)) void nt_fence(void)
 {
@@ -160,8 +217,9 @@ static void bench_one(const char *path, size_t size_bytes, int iters)
 	if (!size_bytes) {
 		uint64_t sz = get_size_ioctl(fd);
 		if (!sz) {
-			fprintf(stderr, "size not provided and ioctl failed for %s\n", path);
-			exit(1);
+			fprintf(stderr, "%s ioctl size failed\n", path);
+			close(fd);
+			return;
 		}
 		size_bytes = (size_t)sz;
 		printf("%s size: %zu bytes (%.2f MiB) source=ioctl\n", path, size_bytes,
@@ -171,9 +229,14 @@ static void bench_one(const char *path, size_t size_bytes, int iters)
 		       (double)size_bytes / (1024.0 * 1024.0));
 	}
 
+#if defined(__i386__) || defined(__x86_64__)
+	nt_init_once();
+#endif
+
 	map = mmap(NULL, size_bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (map == MAP_FAILED) {
-		fprintf(stderr, "mmap %s failed: %s\n", path, strerror(errno));
+		fprintf(stderr, "%s mmap failed: %s\n", path, strerror(errno));
+		close(fd);
 		exit(1);
 	}
 
@@ -325,7 +388,15 @@ static void bench_one(const char *path, size_t size_bytes, int iters)
 			{
 				int ok = 1;
 				t0 = now_sec();
-				for (i = 0; i < n64; i++)
+				for (i = 0; i + 3 < n64; i += 4)
+					nt_store_4x64(&np[i], (uint64_t)(i + (uint64_t)iter),
+							(uint64_t)(i + 1 + (uint64_t)iter),
+							(uint64_t)(i + 2 + (uint64_t)iter),
+							(uint64_t)(i + 3 + (uint64_t)iter));
+				for (; i + 1 < n64; i += 2)
+					nt_store_2x64(&np[i], (uint64_t)(i + (uint64_t)iter),
+							(uint64_t)(i + 1 + (uint64_t)iter));
+				if (i < n64)
 					nt_store_u64(&np[i], (uint64_t)(i + (uint64_t)iter));
 				nt_fence();
 				t1 = now_sec();
@@ -377,7 +448,15 @@ static void bench_one(const char *path, size_t size_bytes, int iters)
 			uint64_t *np = (uint64_t *)map;
 			nt_supported = 1;
 			t0 = now_sec();
-			for (i = 0; i < n64; i++)
+			for (i = 0; i + 3 < n64; i += 4)
+				nt_store_4x64(&np[i], (uint64_t)(i + (uint64_t)iter),
+							(uint64_t)(i + 1 + (uint64_t)iter),
+							(uint64_t)(i + 2 + (uint64_t)iter),
+							(uint64_t)(i + 3 + (uint64_t)iter));
+			for (; i + 1 < n64; i += 2)
+				nt_store_2x64(&np[i], (uint64_t)(i + (uint64_t)iter),
+							(uint64_t)(i + 1 + (uint64_t)iter));
+			if (i < n64)
 				nt_store_u64(&np[i], (uint64_t)(i + (uint64_t)iter));
 			t1 = now_sec();
 			dt += (t1 - t0);
@@ -424,7 +503,15 @@ static void bench_one(const char *path, size_t size_bytes, int iters)
 			uint64_t *np = (uint64_t *)map;
 			nt_supported = 1;
 			t0 = now_sec();
-			for (i = 0; i < n64; i++)
+			for (i = 0; i + 3 < n64; i += 4)
+				nt_store_4x64(&np[i], (uint64_t)(i + (uint64_t)iter),
+							(uint64_t)(i + 1 + (uint64_t)iter),
+							(uint64_t)(i + 2 + (uint64_t)iter),
+							(uint64_t)(i + 3 + (uint64_t)iter));
+			for (; i + 1 < n64; i += 2)
+				nt_store_2x64(&np[i], (uint64_t)(i + (uint64_t)iter),
+							(uint64_t)(i + 1 + (uint64_t)iter));
+			if (i < n64)
 				nt_store_u64(&np[i], (uint64_t)(i + (uint64_t)iter));
 			t1 = now_sec();
 			dt += (t1 - t0);
@@ -482,10 +569,34 @@ static void bench_one(const char *path, size_t size_bytes, int iters)
 				{
 					int ok = 1;
 					t0 = now_sec();
-					for (i = 0; i < n64; i++) {
-						if (overlap_uc && i == fence_idx)
-							continue;
-						nt_store_u64(&np[i], (uint64_t)(i + (uint64_t)iter));
+					if (!overlap_uc) {
+						for (i = 0; i + 3 < n64; i += 4)
+							nt_store_4x64(&np[i], (uint64_t)(i + (uint64_t)iter),
+										(uint64_t)(i + 1 + (uint64_t)iter),
+										(uint64_t)(i + 2 + (uint64_t)iter),
+										(uint64_t)(i + 3 + (uint64_t)iter));
+						for (; i + 1 < n64; i += 2)
+							nt_store_2x64(&np[i], (uint64_t)(i + (uint64_t)iter),
+										(uint64_t)(i + 1 + (uint64_t)iter));
+						if (i < n64)
+							nt_store_u64(&np[i], (uint64_t)(i + (uint64_t)iter));
+					} else {
+						for (i = 0; i + 1 < n64; i += 2) {
+							if (i == fence_idx || (i + 1) == fence_idx) {
+								if (i != fence_idx)
+									nt_store_u64(&np[i], (uint64_t)(i + (uint64_t)iter));
+								if ((i + 1) != fence_idx)
+									nt_store_u64(&np[i + 1], (uint64_t)(i + 1 + (uint64_t)iter));
+								continue;
+							}
+							nt_store_2x64(&np[i], (uint64_t)(i + (uint64_t)iter),
+										(uint64_t)(i + 1 + (uint64_t)iter));
+						}
+						if (n64 & 1) {
+							size_t last = n64 - 1;
+							if (last != fence_idx)
+								nt_store_u64(&np[last], (uint64_t)(last + (uint64_t)iter));
+						}
 					}
 					uc_write_fence((uint64_t)iter);
 					t1 = now_sec();
@@ -602,7 +713,7 @@ int main(int argc, char **argv)
 	uc_fence_init();
 
 	bench_one("/dev/memcache_wb", size_bytes, iters);
-	bench_one("/dev/memcache_uc", size_bytes/8, iters);
+	bench_one("/dev/memcache_uc", size_bytes/8, iters/4);
 	bench_one("/dev/memcache_wc", size_bytes, iters);
 	return g_verify_failures ? 1 : 0;
 }
