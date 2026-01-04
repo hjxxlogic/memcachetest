@@ -101,6 +101,9 @@ static int memcache_mmap(struct file *file, struct vm_area_struct *vma)
 	if (requested > r->size_bytes)
 		return -EINVAL;
 
+	pr_info(DRV_NAME ": mmap %s requested=%lu bytes (%lu pages)\n",
+		type_name(r->type), requested, requested >> PAGE_SHIFT);
+
 	vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
 	vma->vm_page_prot = type_pgprot(r->type, vma->vm_page_prot);
 
@@ -183,6 +186,8 @@ static int __init memcache_init(void)
 	if (!size_bytes)
 		return -EINVAL;
 
+	pr_info(DRV_NAME ": init size_mb=%u size_bytes=%zu\n", size_mb, size_bytes);
+
 	ret = alloc_chrdev_region(&memcache_devt, 0, MEMCACHE_MAX, DRV_NAME);
 	if (ret)
 		return ret;
@@ -209,6 +214,8 @@ static int __init memcache_init(void)
 	for (i = 0; i < MEMCACHE_MAX; i++) {
 		device_create(memcache_class, NULL, memcache_devt + i, NULL, "%s_%s", DEV_BASENAME,
 			      type_name((enum memcache_type)i));
+		pr_info(DRV_NAME ": /dev/%s_%s size_bytes=%zu pages=%lu\n", DEV_BASENAME,
+			type_name((enum memcache_type)i), regions[i].size_bytes, regions[i].nr_pages);
 	}
 
 	return 0;
