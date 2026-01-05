@@ -197,6 +197,70 @@ static __inline__ __attribute__((always_inline)) void uc_write_fence(uint64_t v)
 
 static int g_verify_failures;
 
+static void bench_ntwrite_readback(const char *path, size_t size_bytes, int iters, void *map, volatile uint64_t *p,
+				 size_t n64)
+{
+	int nt_supported = 0;
+	int failures = 0;
+	int iter;
+	uint64_t i;
+	double t0, t1;
+	double dt = 0.0;
+
+	for (iter = 0; iter < iters; iter++) {
+#if defined(__i386__) || defined(__x86_64__)
+		uint64_t *np = (uint64_t *)map;
+		int ok = 1;
+		nt_supported = 1;
+		t0 = now_sec();
+		for (i = 0; i + 3 < n64; i += 4)
+			nt_store_4x64(&np[i], (uint64_t)(i + (uint64_t)iter),
+						(uint64_t)(i + 1 + (uint64_t)iter),
+						(uint64_t)(i + 2 + (uint64_t)iter),
+						(uint64_t)(i + 3 + (uint64_t)iter));
+		for (; i + 1 < n64; i += 2)
+			nt_store_2x64(&np[i], (uint64_t)(i + (uint64_t)iter),
+						(uint64_t)(i + 1 + (uint64_t)iter));
+		if (i < n64)
+			nt_store_u64(&np[i], (uint64_t)(i + (uint64_t)iter));
+
+		for (i = 0; i < n64; i++) {
+			uint64_t v = p[i];
+			uint64_t expect = (uint64_t)(i + (uint64_t)iter);
+			if (v != expect) {
+				fprintf(stderr,
+					"%s ntwrite_readback verify failed iter=%d idx=%" PRIu64 " got=0x%" PRIx64 " expect=0x%" PRIx64 "\n",
+					path, iter, i, v, expect);
+				g_verify_failures++;
+				failures++;
+				ok = 0;
+				break;
+			}
+		}
+		t1 = now_sec();
+		dt += (t1 - t0);
+		if (!ok)
+			break;
+#else
+		break;
+#endif
+	}
+
+	if (nt_supported) {
+		if (!failures)
+			printf("%s ntwrite_readback verify: ok\n", path);
+		else
+			printf("%s ntwrite_readback verify: failed (%d)\n", path, failures);
+		{
+			double bytes = (double)size_bytes * (double)iters * 2.0;
+			printf("%s ntwrite_readback: %.2f MB/s (%.3f s)\n", path,
+			       (bytes / (1024.0 * 1024.0)) / dt, dt);
+		}
+	} else {
+		printf("%s ntwrite_readback: unsupported arch\n", path);
+	}
+}
+
 static void bench_one(const char *path, size_t size_bytes, int iters)
 {
 	int fd;
@@ -494,6 +558,8 @@ static void bench_one(const char *path, size_t size_bytes, int iters)
 		}
 	}
 
+	bench_ntwrite_readback(path, size_bytes, iters, map, p, n64);
+
 	{
 		int nt_supported = 0;
 		int failures = 0;
@@ -667,6 +733,55 @@ static void usage(const char *argv0)
 	fprintf(stderr, "Default size uses kernel module ioctl.\n");
 }
 
+extern void test_a(uint8_t* wc_buffer, uint8_t* uc_buffer, uint8_t* check_buffer);
+extern void test_b(uint8_t* wc_buffer, uint8_t* uc_buffer, uint8_t* check_buffer);
+extern void test_c(uint8_t* wc_buffer, uint8_t* uc_buffer, uint8_t* check_buffer);
+extern void test_d(uint8_t* wc_buffer, uint8_t* uc_buffer, uint8_t* check_buffer);
+
+static void run_test_without_fence(void)
+{
+	const size_t sz = 4096;
+	int fd_wc = -1, fd_uc = -1;
+	uint8_t *wc_map = MAP_FAILED;
+	uint8_t *uc_map = MAP_FAILED;
+	uint8_t *check = NULL;
+
+	fd_wc = open("/dev/memcache_wc", O_RDWR);
+	if (fd_wc < 0)
+		goto out;
+	fd_uc = open("/dev/memcache_uc", O_RDWR);
+	if (fd_uc < 0)
+		goto out;
+
+	wc_map = mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_SHARED, fd_wc, 0);
+	if (wc_map == MAP_FAILED)
+		goto out;
+	uc_map = mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_SHARED, fd_uc, 0);
+	if (uc_map == MAP_FAILED)
+		goto out;
+
+	if (posix_memalign((void **)&check, 4096, sz) != 0)
+		goto out;
+	memset(check, 0, sz);
+
+	test_a(wc_map, uc_map, check);
+	test_b(wc_map, uc_map, check);
+	test_c(wc_map, uc_map, check);
+	test_d(wc_map, uc_map, check);
+
+out:
+	if (check)
+		free(check);
+	if (uc_map != MAP_FAILED)
+		munmap(uc_map, sz);
+	if (wc_map != MAP_FAILED)
+		munmap(wc_map, sz);
+	if (fd_uc >= 0)
+		close(fd_uc);
+	if (fd_wc >= 0)
+		close(fd_wc);
+}
+
 int main(int argc, char **argv)
 {
 	size_t size_bytes = 0;
@@ -715,5 +830,6 @@ int main(int argc, char **argv)
 	bench_one("/dev/memcache_wb", size_bytes, iters);
 	bench_one("/dev/memcache_uc", size_bytes/8, iters/4);
 	bench_one("/dev/memcache_wc", size_bytes, iters);
+	run_test_without_fence();
 	return g_verify_failures ? 1 : 0;
 }

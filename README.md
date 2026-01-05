@@ -17,6 +17,7 @@
   - `Makefile`：编译内核模块。
 - `user/`
   - `cache_bench.c`：用户态 benchmark。
+  - `aa.c`：一个用于验证 WC non-temporal write 回读一致性的 micro-test（A/B/C/D 四种变体），由 `cache_bench` 在末尾调用。
   - `Makefile`：编译 benchmark。
 
 ## 环境要求
@@ -94,6 +95,7 @@ sudo user/cache_bench
 - `write_ucfence`：不使用 `sfence`，每轮写入后对 UC 区域写入一个 fence word（并读回）作为排序/排空手段，然后校验。
 - `ntwrite`：x86 上使用 `movntdq`（SSE2 16-byte streaming store）进行 non-temporal store 写入，每轮结束 `sfence`，然后校验。
 - `ntwrite_nofence`：`movntdq` 写入，不使用任何 fence，每轮写入后校验。
+- `ntwrite_readback`：使用 non-temporal store 写入后，立即回读并校验（写+读一起计入带宽口径）。
 - `ntwrite_nofence_deferred`：`movntdq` 写入，不使用任何 fence，并将校验延后到所有迭代写完后再做一次。
 - `ntwrite_ucfence`：`movntdq` 写入后使用 UC-write fence，然后校验。
 - `read`：顺序读取求和带宽。
@@ -101,6 +103,22 @@ sudo user/cache_bench
 说明：
 
 - UC-write fence 使用 `/dev/memcache_uc` 的一页作为 fence word。由于驱动不支持带 offset 的 `mmap`，该页与 UC 被测区域可能存在物理重叠；为保证校验正确，UC 的 `*_ucfence` 测试会跳过该 fence word 对应的一个 64-bit 元素，不参与写入/求和/期望值。
+
+### WC NT-write 回读 micro-test（A/B/C/D）
+
+`cache_bench` 会在三种内存类型的 benchmark 结束后，额外运行一个 micro-test，用于对比不同“写完成/排序”手段对 WC non-temporal write 之后回读一致性的影响。
+
+四个版本：
+
+- A：baseline（no uc marker, no sfence）
+- B：sfence after nt stores
+- C：uc marker only (no sfence)
+- D：uc marker + sfence
+
+输出项：
+
+- 平均读取延迟（cycles）
+- 数据不一致次数（failures）
 
 ## 示例运行结果
 
