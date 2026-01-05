@@ -117,8 +117,28 @@ sudo user/cache_bench
 
 输出项：
 
+- 平均写入耗时（cycles）：NT 写入 +（可选）UC marker +（可选）sfence
 - 平均读取延迟（cycles）
 - 数据不一致次数（failures）
+
+#### 20 次运行统计（示例）
+
+在本环境下（4KB、每版本 1000 iterations、CPU pin）连续运行 20 次，四个版本均未观察到数据不一致（每版本合计 failures=0/20000）。
+
+写/读阶段 cycle 统计（mean/min/max/stdev，单位：cycles per iteration）：
+
+| Variant | write mean | write min | write max | write stdev | read mean | read min | read max | read stdev |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| A | 498.5 | 474 | 613 | 34.3 | 60067.1 | 56134 | 80924 | 6337.2 |
+| B | 510.2 | 477 | 911 | 94.1 | 58719.8 | 56540 | 80406 | 5162.8 |
+| C | 501.6 | 477 | 601 | 31.7 | 59342.3 | 55636 | 88291 | 6821.1 |
+| D | 516.9 | 478 | 881 | 87.3 | 58951.9 | 55431 | 74933 | 3977.6 |
+
+解读：
+
+- A（无 marker/无 sfence）的 read 阶段更慢，符合“写未提前收敛/排空，读阶段需要等待收敛”的现象。
+- B/C/D 的 read 阶段均值更接近，说明 `sfence` 或 UC marker 能让状态在进入读之前更接近“已收敛”。
+- 个别轮次会出现 read 阶段尖峰（所有版本均可能），通常来自系统中断/虚拟化抖动/调度噪声，不应直接归因于 fence 语义。
 
 ## 示例运行结果
 
