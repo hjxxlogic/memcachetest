@@ -15,18 +15,25 @@
 #define MFENCE() __asm__ volatile("mfence" ::: "memory")
 #define LFENCE() __asm__ volatile("lfence" ::: "memory")
 // 时间测量
-static inline uint64_t rdtsc() { unsigned int lo, hi; __asm__ volatile("rdtsc" : "=a"(lo), "=d"(hi)); return ((uint64_t)hi << 32) | lo; }
+static inline uint64_t rdtsc_ordered(void)
+{
+	unsigned int lo, hi;
+	__asm__ volatile("lfence\n\trdtsc" : "=a"(lo), "=d"(hi) :: "memory");
+	return ((uint64_t)hi << 32) | lo;
+}
 
 static void run_one_variant(const char *name, int do_uc_marker, int do_sfence,
 			    uint8_t *wc_buffer, uint8_t *uc_buffer, uint8_t *check_buffer)
 {
 	printf("%s\n", name);
-	uint64_t total_time = 0;
+	uint64_t total_write = 0;
+	uint64_t total_read = 0;
 	int failures = 0;
 	for (int i = 0; i < ITERATIONS; i++) {
 		// 重置检查缓冲区
 		memset(check_buffer, 0, ALIGN_SIZE);
 		SFENCE();
+		uint64_t w0 = rdtsc_ordered();
 		// 使用MOVNT向WC缓冲区写入
 		for (int j = 0; j < ALIGN_SIZE; j += 8) {
 			_mm_stream_si64((long long*)(wc_buffer + j), 0x0123456789ABCDEF);
@@ -36,11 +43,13 @@ static void run_one_variant(const char *name, int do_uc_marker, int do_sfence,
 			*((volatile uint64_t*)uc_buffer) = 0xDEADBEEFCAFEBABE;
 		if (do_sfence)
 			SFENCE();
+		uint64_t w1 = rdtsc_ordered();
+		total_write += (w1 - w0);
 		// 立即从WC缓冲区读取数据到检查缓冲区
-		uint64_t start = rdtsc();
+		uint64_t start = rdtsc_ordered();
 		memcpy(check_buffer, wc_buffer, ALIGN_SIZE);
-		uint64_t end = rdtsc();
-		total_time += (end - start);
+		uint64_t end = rdtsc_ordered();
+		total_read += (end - start);
 		// 检查数据一致性
 		int valid = 1;
 		for (int j = 0; j < ALIGN_SIZE; j += 8) {
@@ -53,7 +62,8 @@ static void run_one_variant(const char *name, int do_uc_marker, int do_sfence,
 			failures++;
 		}
 	}
-	printf(" 平均读取延迟: %lu cycles\n", total_time / ITERATIONS);
+	printf(" 平均写入耗时: %lu cycles\n", total_write / ITERATIONS);
+	printf(" 平均读取延迟: %lu cycles\n", total_read / ITERATIONS);
 	printf(" 数据不一致次数: %d/%d (%.1f%%)\n", failures, ITERATIONS, (failures * 100.0) / ITERATIONS);
 	if (failures)
 		printf(" 结论: 观察到数据不一致，可能存在排序/可见性问题\n\n");

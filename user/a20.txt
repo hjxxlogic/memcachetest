@@ -1,0 +1,500 @@
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 551 cycles
+ 平均读取延迟: 80924 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 477 cycles
+ 平均读取延迟: 57206 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 519 cycles
+ 平均读取延迟: 57527 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 538 cycles
+ 平均读取延迟: 61283 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 613 cycles
+ 平均读取延迟: 57252 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 481 cycles
+ 平均读取延迟: 56878 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 489 cycles
+ 平均读取延迟: 56428 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 489 cycles
+ 平均读取延迟: 56004 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 485 cycles
+ 平均读取延迟: 56956 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 488 cycles
+ 平均读取延迟: 57838 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 489 cycles
+ 平均读取延迟: 57034 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 484 cycles
+ 平均读取延迟: 57641 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 535 cycles
+ 平均读取延迟: 56321 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 492 cycles
+ 平均读取延迟: 57318 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 478 cycles
+ 平均读取延迟: 57411 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 479 cycles
+ 平均读取延迟: 55431 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 476 cycles
+ 平均读取延迟: 57417 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 477 cycles
+ 平均读取延迟: 56658 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 501 cycles
+ 平均读取延迟: 55636 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 481 cycles
+ 平均读取延迟: 60588 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 475 cycles
+ 平均读取延迟: 56866 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 481 cycles
+ 平均读取延迟: 62693 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 483 cycles
+ 平均读取延迟: 61548 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 513 cycles
+ 平均读取延迟: 57702 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 493 cycles
+ 平均读取延迟: 56979 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 478 cycles
+ 平均读取延迟: 56540 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 482 cycles
+ 平均读取延迟: 56825 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 558 cycles
+ 平均读取延迟: 58084 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 474 cycles
+ 平均读取延迟: 57663 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 477 cycles
+ 平均读取延迟: 56840 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 480 cycles
+ 平均读取延迟: 57028 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 478 cycles
+ 平均读取延迟: 56350 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 512 cycles
+ 平均读取延迟: 57633 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 504 cycles
+ 平均读取延迟: 57358 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 483 cycles
+ 平均读取延迟: 59465 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 479 cycles
+ 平均读取延迟: 57334 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 527 cycles
+ 平均读取延迟: 56659 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 478 cycles
+ 平均读取延迟: 56780 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 478 cycles
+ 平均读取延迟: 56670 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 481 cycles
+ 平均读取延迟: 59336 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 474 cycles
+ 平均读取延迟: 56134 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 478 cycles
+ 平均读取延迟: 56570 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 477 cycles
+ 平均读取延迟: 56160 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 480 cycles
+ 平均读取延迟: 58118 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 475 cycles
+ 平均读取延迟: 56794 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 477 cycles
+ 平均读取延迟: 57289 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 601 cycles
+ 平均读取延迟: 61845 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 565 cycles
+ 平均读取延迟: 58735 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 479 cycles
+ 平均读取延迟: 59255 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 570 cycles
+ 平均读取延迟: 59823 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 490 cycles
+ 平均读取延迟: 58549 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 493 cycles
+ 平均读取延迟: 59810 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 492 cycles
+ 平均读取延迟: 67088 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 911 cycles
+ 平均读取延迟: 80406 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 508 cycles
+ 平均读取延迟: 88291 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 504 cycles
+ 平均读取延迟: 74933 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 490 cycles
+ 平均读取延迟: 72905 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 490 cycles
+ 平均读取延迟: 57435 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 509 cycles
+ 平均读取延迟: 57709 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 493 cycles
+ 平均读取延迟: 57112 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 508 cycles
+ 平均读取延迟: 56828 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 500 cycles
+ 平均读取延迟: 57083 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 490 cycles
+ 平均读取延迟: 58200 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 491 cycles
+ 平均读取延迟: 56716 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 485 cycles
+ 平均读取延迟: 56897 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 497 cycles
+ 平均读取延迟: 56992 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 543 cycles
+ 平均读取延迟: 57887 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 480 cycles
+ 平均读取延迟: 58610 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 476 cycles
+ 平均读取延迟: 57531 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 479 cycles
+ 平均读取延迟: 57788 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 562 cycles
+ 平均读取延迟: 57787 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 881 cycles
+ 平均读取延迟: 58055 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 475 cycles
+ 平均读取延迟: 59004 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 481 cycles
+ 平均读取延迟: 58206 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 480 cycles
+ 平均读取延迟: 58235 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 481 cycles
+ 平均读取延迟: 60499 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+pinned to cpu 0
+测试A: baseline (no uc marker, no sfence)
+ 平均写入耗时: 475 cycles
+ 平均读取延迟: 64235 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试B: sfence after nt stores
+ 平均写入耗时: 489 cycles
+ 平均读取延迟: 56694 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试C: uc marker only (no sfence)
+ 平均写入耗时: 490 cycles
+ 平均读取延迟: 56612 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+
+测试D: uc marker + sfence
+ 平均写入耗时: 490 cycles
+ 平均读取延迟: 56698 cycles
+ 数据不一致次数: 0/1000 (0.0%)
+ 结论: 本次未观察到数据不一致
+

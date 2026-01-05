@@ -827,9 +827,9 @@ int main(int argc, char **argv)
 
 	uc_fence_init();
 
-	bench_one("/dev/memcache_wb", size_bytes, iters);
-	bench_one("/dev/memcache_uc", size_bytes/8, iters/4);
-	bench_one("/dev/memcache_wc", size_bytes, iters);
+	//bench_one("/dev/memcache_wb", size_bytes, iters);
+	//bench_one("/dev/memcache_uc", size_bytes/8, iters/4);
+	//bench_one("/dev/memcache_wc", size_bytes, iters);
 	run_test_without_fence();
 	return g_verify_failures ? 1 : 0;
 }
